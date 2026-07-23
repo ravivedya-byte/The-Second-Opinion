@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>The Second Opinion — Ticker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Pirata+One&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════════════════════════
+   THE SECOND OPINION — lower-third ticker  ·  v3
+   Palette from the key art: oxblood ground, gilt, marble.
+   ═══════════════════════════════════════════════════════════════ */
+:root{
+  --black:      #0C0A09;
+  --black-2:    #14100E;
+  --mast:       #080706;
+  --bone:       #EFE7D9;
+  --muted:      #8B7B68;
+  --rule:       #2B231F;
+  --crimson:    #A5221A;
+  --crimson-dk: #7A170F;
+  --gold:       #C9821A;
+  --gold-dim:   #8A5A12;
+
+  --h-mast: 26px;
+  --h-lane: 46px;
+  --w-flag: 140px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+html,body{
+  width:1920px; height:1080px;
+  overflow:hidden;
+  background:transparent;
+  font-family:'Barlow Condensed','Roboto Condensed',system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+body.solid{background:#050403}
+
+#strip{
+  position:absolute; left:0; right:0; bottom:0;
+  background:var(--black);
+  border-top:1px solid var(--gold-dim);
+  transition:transform .35s cubic-bezier(.4,0,.2,1);
+}
+#strip.hidden{transform:translateY(115%)}
+
+#strip::before{
+  content:''; position:absolute; inset:0; z-index:5;
+  pointer-events:none; opacity:.04; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+#progress{
+  position:absolute; top:-1px; left:0; height:1px; width:0%;
+  background:var(--gold); opacity:.9; z-index:6;
+}
+
+/* ── masthead ──────────────────────────────────────────── */
+#mast{
+  height:var(--h-mast); display:flex; align-items:center;
+  padding:0 18px; border-bottom:1px solid var(--rule);
+  background:var(--mast);
+}
+#logoimg{height:17px; width:auto; display:none}
+#logotext{
+  font-family:'Pirata One','UnifrakturMaguntia',Georgia,serif;
+  font-size:19px; line-height:1; color:var(--bone);
+  letter-spacing:.01em; white-space:nowrap;
+}
+#logotext em{color:var(--gold); font-style:normal}
+
+#tagline{
+  margin-left:16px; display:flex; align-items:center; gap:9px;
+  font-size:11px; letter-spacing:.26em; color:var(--muted);
+  text-transform:uppercase; white-space:nowrap;
+}
+#tagline::before,#tagline::after{
+  content:''; width:13px; height:1px; background:var(--gold-dim);
+}
+
+/* ── lanes ─────────────────────────────────────────────── */
+.lane{height:var(--h-lane); display:flex; align-items:stretch; position:relative}
+#laneA{background:var(--black); border-bottom:1px solid var(--rule)}
+#laneB{background:var(--black-2)}
+
+.flag{
+  width:var(--w-flag); flex:0 0 var(--w-flag);
+  display:flex; align-items:center; justify-content:center; position:relative;
+}
+.flag span{
+  font-weight:700; font-size:13px; letter-spacing:.13em;
+  text-transform:uppercase; white-space:nowrap; line-height:1;
+}
+#laneA .flag{background:var(--crimson)}
+#laneA .flag::after{
+  content:''; position:absolute; right:0; top:0; bottom:0;
+  width:1px; background:var(--gold);
+}
+#laneA .flag span{color:var(--bone)}
+#laneB .flag{border-right:1px solid var(--rule)}
+#laneB .flag span{color:var(--gold); font-weight:600; font-size:12px}
+
+.viewport{flex:1 1 auto; overflow:hidden; position:relative; display:flex; align-items:center}
+.track{display:flex; white-space:nowrap; will-change:transform; transform:translate3d(0,0,0)}
+.unit{flex:0 0 auto; display:flex; align-items:center}
+
+.viewport::after{
+  content:''; position:absolute; top:0; right:0; bottom:0; width:70px;
+  pointer-events:none;
+  background:linear-gradient(to right,rgba(12,10,9,0),var(--black));
+}
+#laneB .viewport::after{background:linear-gradient(to right,rgba(20,16,14,0),var(--black-2))}
+
+.item{
+  display:flex; align-items:baseline; gap:10px;
+  padding:0 26px; border-right:1px solid var(--rule);
+}
+.callout{
+  font-weight:700; font-size:21px; letter-spacing:.14em;
+  color:var(--bone); text-transform:uppercase;
+}
+.outlet{
+  font-family:'Barlow Condensed',sans-serif;
+  font-weight:600; font-size:12px; letter-spacing:.18em;
+  color:var(--gold); text-transform:uppercase; flex:0 0 auto;
+}
+.headline{
+  font-family:'Source Serif 4',Georgia,serif;
+  font-weight:400; font-size:19px; color:var(--bone);
+}
+.empty{
+  font-size:16px; letter-spacing:.18em; color:var(--muted);
+  text-transform:uppercase; padding:0 26px;
+}
+
+/* ── panels ────────────────────────────────────────────── */
+.panel{
+  position:absolute; bottom:150px; left:18px;
+  background:rgba(8,7,6,.96); border:1px solid var(--rule);
+  border-left:2px solid var(--crimson);
+  padding:14px 18px; color:var(--muted);
+  font-size:14px; letter-spacing:.04em; line-height:1.75;
+  transition:opacity .4s;
+}
+.panel.gone{opacity:0; pointer-events:none}
+.panel b{color:var(--bone); font-weight:600; letter-spacing:.1em}
+.panel h4{
+  color:var(--gold); font-size:11px; letter-spacing:.22em;
+  text-transform:uppercase; margin-bottom:8px; font-weight:700;
+}
+
+#diag{max-height:620px; overflow:auto; min-width:560px}
+#diag table{border-collapse:collapse; width:100%; font-size:13px}
+#diag th{
+  text-align:left; color:var(--gold-dim); font-weight:600;
+  font-size:10px; letter-spacing:.18em; text-transform:uppercase;
+  padding:0 14px 5px 0; border-bottom:1px solid var(--rule);
+}
+#diag td{padding:2px 14px 2px 0; color:var(--muted); white-space:nowrap}
+#diag td.name{color:var(--bone)}
+#diag td.ok{color:var(--gold)}
+#diag td.bad{color:var(--crimson)}
+#diag .sub{
+  margin-top:12px; padding-top:10px; border-top:1px solid var(--rule);
+  font-size:12px; line-height:1.65;
+}
+#diag .drop{color:#6E6055; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:520px}
+#diag .drop i{color:var(--crimson-dk); font-style:normal; letter-spacing:.1em}
+#diag .totals{margin-top:10px; color:var(--bone); font-size:13px}
+
+@media (prefers-reduced-motion:reduce){
+  #strip{transition:none}
+}
+</style>
+</head>
+
+<body>
+
+<div id="strip">
+  <div id="progress"></div>
+  <div id="mast">
+    <img id="logoimg" alt="">
+    <span id="logotext">The Second <em>Opinion</em></span>
+    <div id="tagline">Take another look</div>
+  </div>
+
+  <div class="lane" id="laneA">
+    <div class="flag"><span>We call out</span></div>
+    <div class="viewport"><div class="track" id="trackA"></div></div>
+  </div>
+
+  <div class="lane" id="laneB">
+    <div class="flag"><span>On the wire</span></div>
+    <div class="viewport"><div class="track" id="trackB"></div></div>
+  </div>
+</div>
+
+<div id="help" class="panel">
+  <h4>Controls</h4>
+  <b>Space</b> pause &nbsp;·&nbsp; <b>← →</b> speed &nbsp;·&nbsp; <b>H</b> hide strip<br>
+  <b>B</b> background &nbsp;·&nbsp; <b>R</b> refresh &nbsp;·&nbsp; <b>D</b> diagnostics &nbsp;·&nbsp; <b>?</b> this card
+</div>
+
+<div id="diag" class="panel gone">
+  <h4>Feed diagnostics</h4>
+  <table><thead><tr><th>Source</th><th>Tier</th><th>Got</th><th>Kept</th><th>Status</th></tr>
+  <tbody id="diagbody"></tbody></table>
+  <div class="totals" id="diagtotals"></div>
+  <div class="sub"><h4>Recently dropped</h4><div id="diagdrops"></div></div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════════════════════
+   ▼▼▼  EDIT BELOW  ▼▼▼
+   ══════════════════════════════════════════════════════════════ */
+
+const LOGO_FILE = 'logo.png';
+
+const CALLOUTS = [
+  'Narrative Laundering',
+  'Biased Education',
+  'Disguised Unemployment',
+  'Manufactured Consensus',
+  'Selective Justice',
+  'Systemic Alienation'
+];
+
+/* Flip a whole tier off without touching individual feeds. */
+const TIERS = {
+  national:  true,
+  legal:     true,
+  factcheck: true,
+  business:  true,
+  foreign:   true
+};
+
+/* NOTE: RSS paths drift constantly. Press D on load — the panel
+   names every feed that failed. Swap those URLs and move on.
+   Where a section feed exists I've used it over the homepage feed:
+   filtering at the tap beats filtering downstream. */
+const FEEDS = [
+  /* ── national ─────────────────────────────────────────── */
+  { name:'The Hindu',       tier:'national',  url:'https://www.thehindu.com/news/national/feeder/default.rss' },
+  { name:'Indian Express',  tier:'national',  url:'https://indianexpress.com/section/india/feed/' },
+  { name:'NDTV',            tier:'national',  url:'https://feeds.feedburner.com/ndtvnews-india-news' },
+  { name:'Times of India',  tier:'national',  url:'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms' },
+  { name:'Hindustan Times', tier:'national',  url:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml' },
+  { name:'The Print',       tier:'national',  url:'https://theprint.in/feed/' },
+  { name:'Scroll.in',       tier:'national',  url:'https://scroll.in/feed' },
+  { name:'The Wire',        tier:'national',  url:'https://thewire.in/rss' },
+  { name:'Deccan Herald',   tier:'national',  url:'https://www.deccanherald.com/rss/national.rss' },
+
+  /* ── legal ────────────────────────────────────────────── */
+  { name:'LiveLaw',         tier:'legal',     url:'https://www.livelaw.in/rss/top-stories' },
+  { name:'Bar & Bench',     tier:'legal',     url:'https://www.barandbench.com/feed' },
+  { name:'SC Observer',     tier:'legal',     url:'https://www.scobserver.in/feed/' },
+
+  /* ── fact-check & media criticism ─────────────────────── */
+  { name:'Newslaundry',     tier:'factcheck', url:'https://www.newslaundry.com/feed' },
+  { name:'Alt News',        tier:'factcheck', url:'https://www.altnews.in/feed/' },
+  { name:'Boom',            tier:'factcheck', url:'https://www.boomlive.in/feed' },
+
+  /* ── business & economy ───────────────────────────────── */
+  { name:'Mint',            tier:'business',  url:'https://www.livemint.com/rss/news' },
+  { name:'Moneycontrol',    tier:'business',  url:'https://www.moneycontrol.com/rss/latestnews.xml' },
+  { name:'Financial Exp',   tier:'business',  url:'https://www.financialexpress.com/feed/' },
+  { name:'Business Std',    tier:'business',  url:'https://www.business-standard.com/rss/home_page_top_stories.rss' },
+
+  /* ── foreign desks on India ───────────────────────────── */
+  { name:'BBC',             tier:'foreign',   url:'https://feeds.bbci.co.uk/news/world/asia/india/rss.xml' },
+  { name:'Guardian',        tier:'foreign',   url:'https://www.theguardian.com/world/india/rss' },
+  { name:'Al Jazeera',      tier:'foreign',   url:'https://www.aljazeera.com/xml/rss/all.xml' },
+  { name:'Reuters',         tier:'foreign',   url:'https://www.reuters.com/world/india/rss' }
+];
+
+/* Fallback if every feed dies mid-record. */
+const MANUAL_HEADLINES = [
+  // { outlet:'The Hindu', title:'Paste a headline here' },
+];
+
+/* ── FILTER ─────────────────────────────────────────────────
+   Set to MEDIUM: junk + sport + film + lifestyle.
+   Everything here is about FORMAT, never about slant or which
+   outlet ran it. Keep it that way — a lane that only carries
+   headlines suiting your argument is the thing you're calling out.
+   ─────────────────────────────────────────────────────────── */
+const BLOCK = [
+  { label:'video/photo', re:/^\s*(watch|video|photos?|pics?|in pics|in photos|gallery|listen)\s*[:|-]/i },
+  { label:'liveblog',    re:/\b(live updates?|live blog|liveblog|as it happened)\b/i },
+  { label:'listicle',    re:/\b(top|best)\s+\d+\b|^\s*\d+\s+(things|ways|reasons|tips|facts|photos|points)\b/i },
+  { label:'sport',       re:/\b(cricket|ipl\b|t20|odi\b|wicket|batsman|bowler|innings|playing xi|fifa|premier league|la liga|kabaddi|badminton|olympic|asian games|grand slam|formula 1|f1 grand)\b/i },
+  { label:'film/celeb',  re:/\b(bollywood|tollywood|box office|movie review|film review|trailer|teaser|web series|ott release|netflix|prime video|birthday special|wedding photos|red carpet)\b/i },
+  { label:'lifestyle',   re:/\b(horoscope|zodiac|rashifal|astrology|numerology|vastu|recipe|weight loss|skincare|beauty tips|fashion week|home remedies|diet plan)\b/i },
+  { label:'shopping',    re:/\b(amazon sale|flipkart|coupon|discount code|best deals|price drop|smartphone launch|iphone \d|specs leaked|unboxing)\b/i },
+  { label:'viral',       re:/\b(goes viral|netizens|internet reacts|you won'?t believe|shocking video|heartwarming|watch how)\b/i }
+];
+
+/* Your own additions. Plain lowercase substrings. */
+const BLOCK_WORDS = [];
+
+/* Matching items float to the front of the crawl. */
+const PRIORITY = [
+  'parliament','lok sabha','rajya sabha','supreme court','high court','bench',
+  'verdict','judgment','judgement','constitution','amendment','bill','ordinance',
+  'cabinet','minister','ed ','cbi','nia','cag','election commission','poll',
+  'unemployment','employment','inflation','gdp','budget','rbi','tariff','policy',
+  'protest','arrest','custody','bail','fir','chargesheet','rti','tribunal',
+  'governor','defection','no-confidence','commission','plea','petition','notice'
+];
+
+const FILTER = {
+  maxAgeHours: 36,   // older than this is dropped (null = off)
+  perOutlet:   4,    // cap per source, stops loud outlets dominating
+  maxItems:    70,   // total cap — controls crawl cycle length
+  minChars:    24
+};
+
+const CONFIG = {
+  speedA: 58,
+  speedB: 90,
+  perFeed: 8,        // pulled per outlet BEFORE filtering
+  maxHeadline: 118,
+  refreshMins: 8,
+  concurrency: 5,     // simultaneous feed requests — keep low
+  transparent: true
+};
+
+/* ▲▲▲  STOP EDITING  ▲▲▲ ══════════════════════════════════════ */
+
+
+const PROXIES = [
+  u => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  u => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+  u => 'https://corsproxy.io/?' + encodeURIComponent(u)
+];
+
+const $ = id => document.getElementById(id);
+const activeFeeds = () => FEEDS.filter(f => TIERS[f.tier] !== false && f.on !== false);
+
+/* ── logo ──────────────────────────────────────────────────── */
+if(LOGO_FILE){
+  const img = $('logoimg');
+  img.onload  = () => { img.style.display='block'; $('logotext').style.display='none'; };
+  img.onerror = () => { img.style.display='none'; };
+  img.src = LOGO_FILE;
+}
+
+/* ── crawl engine ──────────────────────────────────────────── */
+class Crawl {
+  constructor(trackEl, speed){
+    this.track = trackEl;
+    this.view  = trackEl.parentElement;
+    this.speed = speed;
+    this.x = 0; this.unit = 0; this.paused = false;
+    this.pending = null;
+  }
+  /* New content waits for the crawl to reach its loop point, then
+     swaps. At x === -unit the screen is pixel-identical to x === 0,
+     so the change is invisible. Without this, every 8-minute refresh
+     yanked the lane back to the start mid-shot. */
+  set(html, force){
+    if(force || !this.unit) this.build(html);
+    else this.pending = html;
+  }
+  build(html){
+    if(!html){ this.track.innerHTML=''; this.unit=0; return; }
+    this.track.innerHTML = '';
+    const probe = document.createElement('span');
+    probe.className = 'unit';
+    probe.innerHTML = html;
+    this.track.appendChild(probe);
+    this.unit = probe.getBoundingClientRect().width;
+    if(this.unit < 10){ this.unit = 0; return; }
+    const vw = this.view.getBoundingClientRect().width;
+    const copies = Math.ceil((vw + this.unit) / this.unit) + 1;
+    for(let i=1;i<copies;i++) this.track.appendChild(probe.cloneNode(true));
+    this.x = 0;
+    this.track.style.transform = 'translate3d(0,0,0)';
+  }
+  cycleSeconds(){ return this.unit ? this.unit / this.speed : 0; }
+  step(dt){
+    if(this.paused || !this.unit) return;
+    this.x -= this.speed * dt;
+    if(this.x <= -this.unit){
+      if(this.pending){
+        const html = this.pending; this.pending = null;
+        this.build(html); return;
+      }
+      while(this.x <= -this.unit) this.x += this.unit;
+    }
+    this.track.style.transform = 'translate3d(' + this.x.toFixed(2) + 'px,0,0)';
+  }
+}
+
+const crawlA = new Crawl($('trackA'), CONFIG.speedA);
+const crawlB = new Crawl($('trackB'), CONFIG.speedB);
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min((now-last)/1000, 0.1);
+  last = now;
+  crawlA.step(dt); crawlB.step(dt);
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ── painting ──────────────────────────────────────────────── */
+function paintCallouts(){
+  crawlA.set(CALLOUTS.map(c =>
+    '<span class="item"><span class="callout">'+esc(c)+'</span></span>').join(''), true);
+}
+
+let showingPlaceholder = true;
+function paintNews(items){
+  if(!items.length){
+    crawlB.set('<span class="item"><span class="empty">Feed unavailable — check connection</span></span>', true);
+    showingPlaceholder = true;
+    return;
+  }
+  const html = items.map(i =>
+    '<span class="item"><span class="outlet">'+esc(i.outlet)+'</span>'+
+    '<span class="headline">'+esc(i.title)+'</span></span>').join('');
+  /* Force the swap only when replacing the placeholder — otherwise
+     let it wait for the seam. */
+  crawlB.set(html, showingPlaceholder);
+  showingPlaceholder = false;
+}
+function esc(s){
+  return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function tidy(s){
+  const ta = document.createElement('textarea');
+  ta.innerHTML = String(s||'');
+  let out = ta.value.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim();
+  /* strip trailing outlet branding: "... | The Hindu" */
+  out = out.replace(/\s*[|–—-]\s*(the\s+)?[A-Z][A-Za-z&.\s]{2,22}$/,'').trim();
+  if(out.length > CONFIG.maxHeadline)
+    out = out.slice(0, CONFIG.maxHeadline-1).replace(/[\s,;:.-]+$/,'') + '…';
+  return out;
+}
+
+/* ── filter stages ─────────────────────────────────────────── */
+function blockReason(title){
+  for(const b of BLOCK) if(b.re.test(title)) return b.label;
+  const lower = title.toLowerCase();
+  for(const w of BLOCK_WORDS) if(w && lower.includes(w.toLowerCase())) return 'blockword';
+  return null;
+}
+
+function scoreOf(title){
+  const t = ' ' + title.toLowerCase() + ' ';
+  let s = 0;
+  for(const w of PRIORITY) if(t.includes(w)) s++;
+  return s;
+}
+
+function ageHours(node){
+  const el = node.querySelector('pubDate, published, updated');
+  if(!el) return null;
+  const t = Date.parse(el.textContent.trim());
+  return isNaN(t) ? null : (Date.now()-t)/3600000;
+}
+
+const STOP = new Set(['the','and','for','with','from','that','this','after','over',
+  'says','said','into','amid','will','have','has','not','but','its','his','her',
+  'their','they','who','what','why','how','new','india','indian','court','case']);
+function tokens(t){
+  return new Set(t.toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/)
+    .filter(w => w.length>3 && !STOP.has(w)));
+}
+function overlap(a,b){
+  const A=tokens(a), B=tokens(b);
+  if(!A.size || !B.size) return 0;
+  let hit=0; for(const x of A) if(B.has(x)) hit++;
+  return hit / Math.min(A.size,B.size);
+}
+
+/* ── fetch & parse ─────────────────────────────────────────── */
+const diag = { rows:[], drops:[], cycle:0 };
+
+function parseFeed(xml, feed, row){
+  let doc;
+  try { doc = new DOMParser().parseFromString(xml,'application/xml'); }
+  catch(e){ return []; }
+  if(!doc || doc.querySelector('parsererror')) return [];
+
+  const nodes = Array.from(doc.querySelectorAll('item, entry')).slice(0, CONFIG.perFeed);
+  row.got = nodes.length;
+  const out = [];
+
+  for(const n of nodes){
+    const tEl = n.querySelector('title');
+    const title = tidy(tEl ? tEl.textContent : '');
+    if(title.length < FILTER.minChars){ pushDrop(feed.name,title,'too short'); continue; }
+
+    const reason = blockReason(title);
+    if(reason){ pushDrop(feed.name,title,reason); continue; }
+
+    if(FILTER.maxAgeHours != null){
+      const age = ageHours(n);
+      if(age != null && age > FILTER.maxAgeHours){ pushDrop(feed.name,title,'stale'); continue; }
+    }
+    out.push({ outlet:feed.name, tier:feed.tier, title, score:scoreOf(title) });
+  }
+  return out;
+}
+
+function pushDrop(outlet,title,reason){
+  diag.drops.unshift({outlet,title,reason});
+  if(diag.drops.length > 40) diag.drops.pop();
+}
+
+/* Free CORS proxies rate-limit hard. Firing 23 feeds at once (each
+   able to retry across 3 proxies) is ~69 requests in a second and
+   gets everything refused. Run a few at a time instead. */
+async function pool(items, worker, size){
+  const out = new Array(items.length);
+  let next = 0;
+  async function lane(){
+    while(next < items.length){
+      const i = next++;
+      out[i] = await worker(items[i]);
+    }
+  }
+  await Promise.all(Array.from({length:Math.min(size,items.length)}, lane));
+  return out;
+}
+
+async function fetchFeed(feed){
+  const row = { name:feed.name, tier:feed.tier, got:0, kept:0, ok:false, why:'' };
+  diag.rows.push(row);
+  for(const proxy of PROXIES){
+    try{
+      const ctrl  = new AbortController();
+      const timer = setTimeout(()=>ctrl.abort(), 7000);
+      const res   = await fetch(proxy(feed.url), { signal:ctrl.signal, cache:'no-store' });
+      clearTimeout(timer);
+      if(!res.ok){
+        row.why = res.status === 429 ? 'proxy throttled' : 'http '+res.status;
+        continue;
+      }
+      const items = parseFeed(await res.text(), feed, row);
+      if(row.got){ row.ok = true; row.why = ''; return items; }
+      row.why = 'no items / not RSS';
+    }catch(e){
+      row.why = (e && e.name === 'AbortError') ? 'timeout' : 'blocked';
+    }
+  }
+  return [];
+}
+
+/* ── selection: dedupe → cap → interleave ──────────────────── */
+function select(all){
+  all.sort((a,b) => b.score - a.score);
+
+  const kept = [];
+  for(const item of all){
+    let dupe = false;
+    for(const k of kept){
+      if(overlap(item.title, k.title) >= 0.6){ dupe = true; break; }
+    }
+    if(dupe){ pushDrop(item.outlet, item.title, 'duplicate'); continue; }
+    kept.push(item);
+  }
+
+  const perOutlet = {};
+  const capped = kept.filter(i => {
+    perOutlet[i.outlet] = (perOutlet[i.outlet]||0) + 1;
+    if(perOutlet[i.outlet] > FILTER.perOutlet){
+      pushDrop(i.outlet, i.title, 'outlet cap'); return false;
+    }
+    return true;
+  });
+
+  /* round-robin by outlet so no source runs in a block */
+  const byOutlet = {};
+  for(const i of capped) (byOutlet[i.outlet] = byOutlet[i.outlet] || []).push(i);
+  const groups = Object.values(byOutlet);
+  const out = [];
+  const longest = groups.reduce((m,g)=>Math.max(m,g.length),0);
+  for(let i=0;i<longest;i++)
+    for(const g of groups) if(g[i]) out.push(g[i]);
+
+  return out.slice(0, FILTER.maxItems);
+}
+
+/* ── refresh ───────────────────────────────────────────────── */
+/* Feed status is operator information, not on-air furniture.
+   It lives in the D panel now — nothing writes to the masthead. */
+let feedState = 'connecting';
+function setState(text){ feedState = text; }
+
+let cache = [], refreshing = false;
+
+async function refresh(){
+  if(refreshing) return;
+  refreshing = true;
+  diag.rows = [];
+  const live = activeFeeds();
+  setState('fetching');
+
+  const groups = await pool(live, fetchFeed, CONFIG.concurrency);
+  const ok = diag.rows.filter(r => r.ok).length;
+
+  const merged = select(groups.flat());
+  for(const r of diag.rows) r.kept = merged.filter(m => m.outlet === r.name).length;
+
+  if(merged.length){
+    cache = merged;
+    paintNews(cache);
+    diag.cycle = crawlB.cycleSeconds();
+    setState(ok+'/'+live.length+' live · '+merged.length+' items');
+  } else if(cache.length){
+    setState('cached — refresh failed');
+  } else if(MANUAL_HEADLINES.length){
+    paintNews(MANUAL_HEADLINES); setState('manual fallback');
+  } else {
+    paintNews([]); setState('offline — 0/'+live.length+' answered');
+    /* Total failure is usually transient proxy throttling. Try again
+       shortly rather than sitting dead for the full interval. */
+    setTimeout(refresh, 45000);
+  }
+
+  renderDiag();
+  refreshing = false;
+  cycleStart = performance.now();
+}
+
+/* ── diagnostics panel ─────────────────────────────────────── */
+function renderDiag(){
+  const rows = diag.rows.slice().sort((a,b) =>
+    a.tier === b.tier ? a.name.localeCompare(b.name) : a.tier.localeCompare(b.tier));
+
+  $('diagbody').innerHTML = rows.map(r =>
+    '<tr><td class="name">'+esc(r.name)+'</td><td>'+esc(r.tier)+'</td>'+
+    '<td>'+r.got+'</td><td>'+r.kept+'</td>'+
+    '<td class="'+(r.ok?'ok':'bad')+'">'+(r.ok?'ok':esc(r.why||'FAILED'))+'</td></tr>').join('');
+
+  const mins = Math.floor(diag.cycle/60), secs = Math.round(diag.cycle%60);
+  $('diagtotals').innerHTML =
+    'Status <b>'+esc(feedState)+'</b> · on air <b>'+cache.length+
+    '</b> items · full crawl cycle <b>'+mins+'m '+secs+'s</b>';
+
+  $('diagdrops').innerHTML = diag.drops.slice(0,14).map(d =>
+    '<div class="drop"><i>'+esc(d.reason)+'</i> &nbsp;'+esc(d.outlet)+' — '+esc(d.title)+'</div>'
+  ).join('') || '<div class="drop">nothing dropped yet</div>';
+}
+
+/* ── progress hairline ─────────────────────────────────────── */
+let cycleStart = performance.now();
+function tickProgress(){
+  const span = CONFIG.refreshMins*60000;
+  $('progress').style.width = Math.min(100,((performance.now()-cycleStart)/span)*100)+'%';
+  requestAnimationFrame(tickProgress);
+}
+requestAnimationFrame(tickProgress);
+
+/* ── controls ──────────────────────────────────────────────── */
+let helpTimer;
+function flashHelp(){
+  $('help').classList.remove('gone');
+  clearTimeout(helpTimer);
+  helpTimer = setTimeout(()=>$('help').classList.add('gone'),7000);
+}
+
+document.addEventListener('keydown', e => {
+  const k = e.key.toLowerCase();
+  if(e.code === 'Space'){ e.preventDefault(); crawlA.paused = crawlB.paused = !crawlA.paused; }
+  else if(k === 'arrowright'){ crawlA.speed *= 1.15; crawlB.speed *= 1.15; }
+  else if(k === 'arrowleft'){  crawlA.speed /= 1.15; crawlB.speed /= 1.15; }
+  else if(k === 'h'){ $('strip').classList.toggle('hidden'); }
+  else if(k === 'b'){ document.body.classList.toggle('solid'); }
+  else if(k === 'r'){ refresh(); }
+  else if(k === 'd'){ renderDiag(); $('diag').classList.toggle('gone'); $('help').classList.add('gone'); }
+  else if(k === '?' || k === '/'){ flashHelp(); }
+});
+
+/* ── boot ──────────────────────────────────────────────────── */
+if(!CONFIG.transparent) document.body.classList.add('solid');
+
+function boot(){
+  paintCallouts();
+  paintNews([]);
+  setState('connecting');
+  refresh();
+  setInterval(refresh, CONFIG.refreshMins*60000);
+  flashHelp();
+}
+
+if(document.fonts && document.fonts.ready){
+  document.fonts.ready.then(boot);
+  setTimeout(()=>{ if(!crawlA.unit) boot(); },3000);
+} else {
+  window.addEventListener('load', boot);
+}
+
+window.addEventListener('resize', () => {
+  paintCallouts();
+  paintNews(cache.length ? cache : (MANUAL_HEADLINES.length ? MANUAL_HEADLINES : []));
+});
+</script>
+</body>
+</html>
