@@ -296,7 +296,8 @@ const BLOCK = [
   { label:'film/celeb',  re:/\b(bollywood|tollywood|box office|movie review|film review|trailer|teaser|web series|ott release|netflix|prime video|birthday special|wedding photos|red carpet)\b/i },
   { label:'lifestyle',   re:/\b(horoscope|zodiac|rashifal|astrology|numerology|vastu|recipe|weight loss|skincare|beauty tips|fashion week|home remedies|diet plan)\b/i },
   { label:'shopping',    re:/\b(amazon sale|flipkart|coupon|discount code|best deals|price drop|smartphone launch|iphone \d|specs leaked|unboxing)\b/i },
-  { label:'viral',       re:/\b(goes viral|netizens|internet reacts|you won'?t believe|shocking video|heartwarming|watch how)\b/i }
+  { label:'viral',       re:/\b(goes viral|netizens|internet reacts|you won'?t believe|shocking video|heartwarming|watch how)\b/i },
+  { label:'tech/ai',     re:/\b(artificial intelligence|\bai\b|chatgpt|openai|anthropic|machine learning|\bllm\b|large language model|gpt-\d|gadget review|smartphone review|app update|software update|tech review|gaming console|silicon valley|\bnft\b|metaverse|crypto|bitcoin|blockchain)\b/i }
 ];
 
 /* Your own additions. Plain lowercase substrings. */
@@ -306,7 +307,7 @@ const BLOCK_WORDS = [];
 const PRIORITY = [
   'parliament','lok sabha','rajya sabha','supreme court','high court','bench',
   'verdict','judgment','judgement','constitution','amendment','bill','ordinance',
-  'cabinet','minister','ed ','cbi','nia','cag','election commission','poll',
+  'cabinet','minister','ed','cbi','nia','cag','election commission','poll',
   'unemployment','employment','inflation','gdp','budget','rbi','tariff','policy',
   'protest','arrest','custody','bail','fir','chargesheet','rti','tribunal',
   'governor','defection','no-confidence','commission','plea','petition','notice'
@@ -316,8 +317,12 @@ const FILTER = {
   maxAgeHours: 36,   // older than this is dropped (null = off)
   perOutlet:   4,    // cap per source, stops loud outlets dominating
   maxItems:    70,   // total cap — controls crawl cycle length
-  minChars:    24
+  minChars:    24,
+  minScore:         1,
+  corroborationMin: 2
 };
+
+const BUILD = 'v4.2';
 
 const CONFIG = {
   speedA: 58,
@@ -452,12 +457,22 @@ function blockReason(title){
   return null;
 }
 
+/* Word-boundary matching. A plain substring scorer had a real bug:
+   'ed ' (for Enforcement Directorate) matched the tail of "spotted ",
+   'bill' matched inside "billboard", 'budget' matched "budgetary". */
+function escRe(s){ return s.replace(/[.*+?^${}()|[\]\\]/g,'\\$&'); }
+const PRIORITY_RE = PRIORITY.map(w =>
+  new RegExp('\\b'+escRe(w.trim()).replace(/\s+/g,'\\s+')+'\\b','i'));
+
 function scoreOf(title){
-  const t = ' ' + title.toLowerCase() + ' ';
-  let s = 0;
-  for(const w of PRIORITY) if(t.includes(w)) s++;
-  return s;
+  let n = 0;
+  for(const r of PRIORITY_RE) if(r.test(title)) n++;
+  return n;
 }
+
+/* Tiers already curated to the beat don't need a keyword hit to prove
+   they're major — the source itself is the filter. */
+const SCORE_EXEMPT_TIERS = new Set(['legal','business','factcheck']);
 
 function ageHours(node){
   const el = node.querySelector('pubDate, published, updated');
@@ -478,6 +493,21 @@ function overlap(a,b){
   if(!A.size || !B.size) return 0;
   let hit=0; for(const x of A) if(B.has(x)) hit++;
   return hit / Math.min(A.size,B.size);
+}
+
+/* How many distinct outlets are covering essentially the same story.
+   Threshold is lower than the dedupe pass (0.5 vs 0.6) on purpose: two
+   outlets phrase a shared story more differently than one outlet
+   re-publishing its own headline. */
+function tagCorroboration(all){
+  for(const i of all){
+    const outlets = new Set([i.outlet]);
+    for(const j of all){
+      if(j === i) continue;
+      if(overlap(i.title, j.title) >= 0.5) outlets.add(j.outlet);
+    }
+    i.corroboration = outlets.size;
+  }
 }
 
 /* ── fetch & parse ─────────────────────────────────────────── */
@@ -556,10 +586,23 @@ async function fetchFeed(feed){
 
 /* ── selection: dedupe → cap → interleave ──────────────────── */
 function select(all){
-  all.sort((a,b) => b.score - a.score);
+  tagCorroboration(all);
+
+  /* Significance gate — the "major news only" rule. Curated tiers pass
+     on trust. Everything else needs a priority-term hit or independent
+     coverage by 2+ outlets. */
+  const significant = all.filter(i => {
+    if(SCORE_EXEMPT_TIERS.has(i.tier)) return true;
+    if(i.score >= FILTER.minScore) return true;
+    if(i.corroboration >= FILTER.corroborationMin) return true;
+    pushDrop(i.outlet, i.title, 'not significant');
+    return false;
+  });
+
+  significant.sort((a,b) => (b.score + b.corroboration) - (a.score + a.corroboration));
 
   const kept = [];
-  for(const item of all){
+  for(const item of significant){
     let dupe = false;
     for(const k of kept){
       if(overlap(item.title, k.title) >= 0.6){ dupe = true; break; }
@@ -643,7 +686,7 @@ function renderDiag(){
 
   const mins = Math.floor(diag.cycle/60), secs = Math.round(diag.cycle%60);
   $('diagtotals').innerHTML =
-    'Status <b>'+esc(feedState)+'</b> · on air <b>'+cache.length+
+    'Build <b>'+BUILD+'</b> · Status <b>'+esc(feedState)+'</b> · on air <b>'+cache.length+
     '</b> items · full crawl cycle <b>'+mins+'m '+secs+'s</b>';
 
   $('diagdrops').innerHTML = diag.drops.slice(0,14).map(d =>
