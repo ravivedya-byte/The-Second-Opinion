@@ -250,13 +250,8 @@ const FEEDS = [
   { name:'NDTV',            tier:'national',  url:'https://feeds.feedburner.com/ndtvnews-india-news' },
   { name:'Times of India',  tier:'national',  url:'https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms' },
   { name:'Hindustan Times', tier:'national',  url:'https://www.hindustantimes.com/feeds/rss/india-news/rssfeed.xml' },
-  { name:'The Print',       tier:'national',  url:'https://theprint.in/feed/' },
-  { name:'Scroll.in',       tier:'national',  url:'https://scroll.in/feed' },
-  { name:'The Wire',        tier:'national',  url:'https://thewire.in/rss' },
-  { name:'Deccan Herald',   tier:'national',  url:'https://www.deccanherald.com/rss/national.rss' },
 
   /* ── legal ────────────────────────────────────────────── */
-  { name:'LiveLaw',         tier:'legal',     url:'https://www.livelaw.in/rss/top-stories' },
   { name:'Bar & Bench',     tier:'legal',     url:'https://www.barandbench.com/feed' },
   { name:'SC Observer',     tier:'legal',     url:'https://www.scobserver.in/feed/' },
 
@@ -267,15 +262,12 @@ const FEEDS = [
 
   /* ── business & economy ───────────────────────────────── */
   { name:'Mint',            tier:'business',  url:'https://www.livemint.com/rss/news' },
-  { name:'Moneycontrol',    tier:'business',  url:'https://www.moneycontrol.com/rss/latestnews.xml' },
-  { name:'Financial Exp',   tier:'business',  url:'https://www.financialexpress.com/feed/' },
   { name:'Business Std',    tier:'business',  url:'https://www.business-standard.com/rss/home_page_top_stories.rss' },
 
   /* ── foreign desks on India ───────────────────────────── */
   { name:'BBC',             tier:'foreign',   url:'https://feeds.bbci.co.uk/news/world/asia/india/rss.xml' },
   { name:'Guardian',        tier:'foreign',   url:'https://www.theguardian.com/world/india/rss' },
-  { name:'Al Jazeera',      tier:'foreign',   url:'https://www.aljazeera.com/xml/rss/all.xml' },
-  { name:'Reuters',         tier:'foreign',   url:'https://www.reuters.com/world/india/rss' }
+  { name:'Al Jazeera',      tier:'foreign',   url:'https://www.aljazeera.com/xml/rss/all.xml' }
 ];
 
 /* Fallback if every feed dies mid-record. */
@@ -323,7 +315,7 @@ const FILTER = {
   corroborationMin: 2
 };
 
-const BUILD = 'v4.3';
+const BUILD = 'v4.4';
 
 const CONFIG = {
   speedA: 58,
